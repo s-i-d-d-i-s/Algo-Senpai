@@ -16,8 +16,6 @@ class Ranklists(commands.Cog):
 	@commands.Cog.listener()
 	async def on_ready(self):
 		print("Ranklist is Online")
-        
-        """ Not Sure if I should Make it ? :thinkies:"""
 		# while True:
 		# 	daily_pset_channel = find(lambda x: x.id == DAILYPSET_CHANNEL,  self.client.guilds[0].text_channels)
 		# 	message = await daily_pset_channel.fetch_message(daily_pset_channel.last_message_id)
