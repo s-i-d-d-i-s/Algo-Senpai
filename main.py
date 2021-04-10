@@ -22,7 +22,6 @@ async def on_ready():
 async def on_guild_join(guild):
 	general = find(lambda x: x.name == 'general',  guild.text_channels)
 	if general and general.permissions_for(guild.me).send_messages:
-		desc = "Hello !\n\nI am a Mashup Chan"
 		desc += "\n\nI am a bot created by [s59_60r](https://github.com/s-i-d-d-i-s)"
 		desc += "\n\nI help other coders in their training. By making mashups, track progress and asking random questions etc."
 		desc += "\n\nI'm currently in beta.:frowning: "
@@ -39,15 +38,16 @@ for filename in os.listdir('./cogs'):
 
 
 
+
 @client.event
 async def on_member_join(member):
-	print(f'{member} has joined our guild named {member.guild}!')
+	print(f'{member} has joined our kitchen named {member.guild}!')
 
 
 
 @client.event
 async def on_member_remove(member):
-	print(f'{member} has left our guild named {member.guild}!')
+	print(f'{member} has left our named {member.guild}!')
 
 
 #Add Your Bot Token

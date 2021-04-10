@@ -63,8 +63,51 @@ class DB:
 			);
 			""")
 		
+		cur.execute("""
+			CREATE TABLE IF NOT EXISTS ranklist(
+			id SERIAL PRIMARY KEY,
+			guildid VARCHAR (255) NOT NULL,
+			channelid VARCHAR (255) NOT NULL,
+			last_sent VARCHAR (255) NOT NULL
+			);
+			""")
+
 		cur.close()
 		self.con.commit()
+
+	def add_ranklist(self,guildid,channelid):
+		cur = self.con.cursor()
+		cur.execute(f"INSERT INTO ranklist(guildid,channelid,last_sent) VALUES('{guildid}','{channelid}','{0}')")
+		self.con.commit()
+		cur.close()
+
+	def fetch_ranklist(self,guildid):
+		cur = self.con.cursor()
+		cur.execute(f"SELECT * from ranklist WHERE guildid='{guildid}'")
+		data = cur.fetchall()
+		self.con.commit()
+		cur.close()
+		return data
+
+	def fetch_all_ranklist(self):
+		cur = self.con.cursor()
+		cur.execute(f"SELECT * from ranklist")
+		data = cur.fetchall()
+		self.con.commit()
+		cur.close()
+		return data
+
+	def update_ranklist(self,guildid,channelid):
+		cur = self.con.cursor()
+		cur.execute(f"UPDATE ranklist SET channelid='{channelid}',last_sent='{0}' WHERE guildid='{guildid}'")
+		self.con.commit()
+		cur.close()
+
+	def update_ranklist_last_sent(self,id):
+		cur = self.con.cursor()
+		cur.execute(f"UPDATE ranklist SET last_sent='{int(time.time())}' WHERE id='{id}'")
+		self.con.commit()
+		cur.close()
 
 	def add_mashup_data(self,guildid,channelid,msgid):
 		cur = self.con.cursor()

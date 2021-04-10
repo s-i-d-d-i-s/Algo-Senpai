@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.utils import find
 import asyncio
 import json
@@ -10,17 +10,29 @@ from .utils import cfmaster,db,table
 import pytz
 from datetime import datetime
 
+RANKLIST_TIMELIMIT = 12*60*60
 
 class Mashups(commands.Cog):
 	"""docstring for FunStuff"""
 	def __init__(self, client):
 		self.client = client
 		self.db = db.DB()
+		self.printer.start()
 
 
 	@commands.Cog.listener()
 	async def on_ready(self):
 		print("Daily PSet Online")
+
+	@tasks.loop(seconds=300)
+	async def printer(self):
+		await self.send_pset_scheduled()
+
+
+	@printer.before_loop
+	async def before_printer(self):
+		print('waiting...')
+		await self.client.wait_until_ready()
 
 
 	def isRating(self,n):
@@ -73,8 +85,23 @@ class Mashups(commands.Cog):
 		return colour
 
 	@commands.has_role('Admin')
+	@commands.command(brief='Add a ranklist channel')
+	async def add_ranklist(self,ctx):
+		last_msg = ctx.channel.last_message
+		await last_msg.delete()
+		data = self.db.fetch_ranklist(str(ctx.guild.id))
+		if len(data)==0:
+			self.db.add_ranklist(str(ctx.guild.id),str(ctx.channel.id))
+			await ctx.send(f"```Ranklist assigned to this channel!```")
+		else:
+			self.db.update_ranklist(str(ctx.guild.id),str(ctx.channel.id))
+			await ctx.send(f"```Ranklist channel updated```")
+
+	@commands.has_role('Admin')
 	@commands.command(brief='Initialize a Problemset')
 	async def add_pset(self,ctx,lower_rating=None,upper_rating=None,time_limit=None,problem_count=None):
+		last_msg = ctx.channel.last_message
+		await last_msg.delete()
 		try:
 			isValid,ERR_MSG = self.verify_args(lower_rating,upper_rating,time_limit,problem_count)
 			if isValid == False:
@@ -91,6 +118,7 @@ class Mashups(commands.Cog):
 				await ctx.send("```There already exist a mashup for this channel with same parameters```")	
 				return
 			self.db.add_mashup(guildid,channelid,time_limit,lower_rating,upper_rating,problem_count)
+			
 			await ctx.send("```Assigned a mashup to this channel```")
 		except Exception as e:
 			await ctx.send(f"```{str(e)}```")
@@ -129,10 +157,58 @@ class Mashups(commands.Cog):
 		except Exception as e:
 			await ctx.send(f"```{str(e)}```")
 
+	async def send_pset_scheduled(self):
+		try:
+			data = self.db.fetch_all_mashup()
+			tz = pytz.timezone('Asia/Kolkata')
+			time_day = datetime.now(tz).day
+			time_month = datetime.now(tz).month
+			time_year = datetime.now(tz).year
+			for x in data:
+				guildid = int(x[1])
+				channelid = int(x[2])
+				timelimit = int(x[3])*24*60*60
+				lower_rating = int(x[4])
+				last_sent  = int(x[5])
+				upper_rating = int(x[6])
+				problem_count= int(x[7])
+				print(guildid,channelid,timelimit,lower_rating,last_sent,upper_rating,problem_count)
+				if int(time.time())<last_sent+timelimit:
+					print("skipping")
+					continue
+				self.db.update_mashup(x[0])
+				channel = self.client.get_channel(channelid)
+				mashupData = cfmaster.getPset(lower_rating,upper_rating,problem_count)
+				embed = discord.Embed(description=mashupData, color=self.getRandomColour())
+				current_pset = await channel.send(f"```{x[3]} Day Problemset : {time_day}/{time_month}/{time_year} || TL - {x[3]} Days```\n\n",embed=embed)
+				self.db.add_mashup_data(guildid,channelid,current_pset.id)
+				pset_emojis = "🇦🇧🇨🇩🇪"
+				for i in range(problem_count):
+					await current_pset.add_reaction(pset_emojis[i])
+			print("Finished Sending Mashups ")
+		except Exception as e:
+			print(str(e))
+
+		try:
+			data = self.db.fetch_all_ranklist()
+			for x in data:
+				pid = x[0]
+				guildid = x[1]
+				channelid = x[2]
+				last_sent = x[3]
+				if time.time()>int(last_sent)+RANKLIST_TIMELIMIT:
+					await self.send_ranklist(str(guildid),str(channelid))
+					self.db.update_ranklist_last_sent(str(pid))
+				else:
+					print("Skipping")
+		except Exception as e:
+			print(str(e))
 
 	@commands.command(brief='Get ranklist for this server')
 	@commands.has_role('ACM - Active/Coding')
 	async def ranklist(self,ctx):
+		last_msg = ctx.channel.last_message
+		await last_msg.delete()
 		try:
 			guildid = ctx.message.guild.id
 			data = self.db.fetch_mashup_data(guildid)
@@ -160,9 +236,44 @@ class Mashups(commands.Cog):
 				idx+=1
 			ranklist = '```yaml\n'+str(t)+'\n```'
 			data = discord.Embed(title=f'Mashup Leaderboard',description=ranklist,color=self.getRandomColour())
+			
 			await ctx.send(embed=data)
 		except Exception as e:
 			await ctx.send(f"```{str(e)}```")
+
+
+	async def send_ranklist(self,guildid,channelid):
+		data = self.db.fetch_mashup_data(guildid)
+		ranklist = {}
+		for y in data:
+			channel = self.client.get_channel(int(y[2]))
+			message = await channel.fetch_message(int(y[3]))
+			for x in message.reactions:
+				users = await x.users().flatten()
+				for z in users:
+					if z.bot==False:
+						username = z.name+"#"+z.discriminator
+						if username in ranklist.keys():
+							ranklist[username]+=1
+						else:
+							ranklist[username]=1
+		ranklist =dict(sorted(ranklist.items(), key=lambda item: item[1],reverse=True))
+		style = table.Style('{:>} {:<} {:<}')
+		t = table.Table(style)
+		t += table.Header('No','Username', 'Solves')
+		t += table.Line()
+		idx = 1
+		for x in ranklist:
+			t += table.Data(idx,x, ranklist[x])
+			idx+=1
+		ranklist = '```yaml\n'+str(t)+'\n```'
+		data = discord.Embed(title=f'Mashup Leaderboard',description=ranklist,color=self.getRandomColour())
+		ranklist_channel = self.client.get_channel(int(channelid))
+		await ranklist_channel.send(embed=data)
+		
+
+
+
 
 	@commands.command(brief='Get bot version')
 	async def version(self,ctx):
