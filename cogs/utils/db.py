@@ -36,6 +36,38 @@ class DB:
 				return data[d]
 		return None
 
+	def add_static_ranklist(self,guildid,channelid,msgid):
+		obj = {'guildid':guildid,'channelid':channelid,'msg':msgid,'last_updated':0}
+		requests.post(self.baseUrl + 'static_ranklist.json',json.dumps(obj))
+		def fetch_ranklist_with_id(baseUrl,guildId):
+			data = json.loads(requests.get(baseUrl + 'static_ranklist.json').content)
+			for d in data:
+				if data[d]['guildid'] == guildId and data[d]['channelid']==channelid:
+					obj = data[d]
+					obj['id'] = d
+					return obj
+			return None
+		obj = fetch_ranklist_with_id(self.baseUrl,guildid)
+		requests.patch(self.baseUrl + 'static_ranklist/'+obj['id']+'.json',json.dumps(obj))
+	
+	def fetch_static_ranklist(self,guildId):
+		data = json.loads(requests.get(self.baseUrl + 'static_ranklist.json').content)
+		if data == None:
+			return None
+		for d in data:
+			if data[d]['guildid'] == guildId:
+				return data[d]
+		return None
+
+	def fetch_all_static_ranklist(self):
+		data = json.loads(requests.get(self.baseUrl + 'static_ranklist.json').content)		
+		res = []
+		if data==None:
+			return res
+		for d in data:
+			res.append(data[d])
+		return res
+
 	def fetch_all_ranklist(self):
 		data = json.loads(requests.get(self.baseUrl + 'ranklist.json').content)		
 		res = []
@@ -56,6 +88,17 @@ class DB:
 		obj['channelid'] = channelid
 		obj['last_sent'] = 0
 		data = json.loads(requests.patch(self.baseUrl + 'ranklist/'+obj['id']+'.json',json.dumps(obj)).content)
+
+	def update_static_ranklist_last_sent(self,id):
+		def fetch_ranklist_with_id(baseUrl,id):
+			data = json.loads(requests.get(baseUrl + 'static_ranklist.json').content)
+			for d in data:
+				if data[d]['id'] == id:
+					return data[d]
+			return None
+		obj = fetch_ranklist_with_id(self.baseUrl,id)
+		obj['last_sent'] = int(time.time())
+		data = json.loads(requests.patch(self.baseUrl + 'static_ranklist/'+obj['id']+'.json',json.dumps(obj)).content)
 
 	def update_ranklist_last_sent(self,id):
 		def fetch_ranklist_with_id(baseUrl,id):

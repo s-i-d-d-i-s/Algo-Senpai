@@ -99,6 +99,20 @@ class Mashups(commands.Cog):
 		else:
 			self.db.update_ranklist(str(ctx.guild.id),str(ctx.channel.id))
 			await ctx.send(f"```Ranklist channel updated```")
+	
+	@commands.has_role('Admin')
+	@commands.command(brief='Add a static ranklist channel')
+	async def add_static_ranklist(self,ctx):
+		last_msg = ctx.channel.last_message
+		await last_msg.delete()
+		data = self.db.fetch_static_ranklist(str(ctx.guild.id))
+		if data == None:
+			data = await self.getRanklistEmbed(ctx.guild.id)
+			msg = await ctx.send(embed=data)
+			self.db.add_static_ranklist(str(ctx.guild.id),str(ctx.channel.id),str(msg.id))
+			await ctx.send(f"```Static Ranklist assigned to this channel!```")
+		else:
+			await ctx.send(f"```Static Ranklist Already Exists```")
 
 	@commands.has_role('Admin')
 	@commands.command(brief='Initialize a Problemset')
@@ -211,6 +225,28 @@ class Mashups(commands.Cog):
 		except Exception as e:
 			print(str(e))
 
+		try:
+			data = self.db.fetch_all_static_ranklist()
+			if len(data)==0:
+				print("No Static Ranklist")
+			for x in data:
+				pid = x['id']
+				guildid = int(x['guildid'])
+				channelid = int(x['channelid'])
+				msgid = int(x['msgid'])
+				last_sent = int(x['last_sent'])
+				data = self.getRanklistEmbed(guildid)
+				if time.time()>int(last_sent)+RANKLIST_TIMELIMIT:
+					static_ranklist_channel = self.client.get_channel(channelid)
+					msg = await static_ranklist_channel.fetch_message(msgid)					
+					msg.edit(embed=data)
+					self.db.update_static_ranklist_last_sent(str(pid))
+				else:
+					print("Skipping")
+		except Exception as e:
+			print(str(e))
+
+
 	@commands.command(brief='Get ranklist for this server')
 	@commands.has_role('ACM - Active/Coding')
 	@commands.has_role('Admin')
@@ -249,8 +285,7 @@ class Mashups(commands.Cog):
 		except Exception as e:
 			await ctx.send(f"```{str(e)}```")
 
-
-	async def send_ranklist(self,guildid,channelid):
+	async def getRanklistEmbed(self,guildid):
 		data = self.db.fetch_mashup_data(int(guildid))
 		ranklist = {}
 		for y in data:
@@ -276,9 +311,14 @@ class Mashups(commands.Cog):
 			idx+=1
 		ranklist = '```yaml\n'+str(t)+'\n```'
 		data = discord.Embed(title=f'Mashup Leaderboard',description=ranklist,color=self.getRandomColour())
+		return data
+
+	async def send_ranklist(self,guildid,channelid):
+		data = await self.getRanklistEmbed(guildid)
 		ranklist_channel = self.client.get_channel(int(channelid))
 		await ranklist_channel.send(embed=data)
 		
+
 
 	@commands.command(brief='Get bot version')
 	async def version(self,ctx):
