@@ -242,7 +242,7 @@ class Mashups(commands.Cog):
 					last_seen = int(time.time())-last_sent
 					last_seen/=60
 					last_seen/=60
-					msg.edit(content=f'Last Updated : {last_sent} hrs ago', embed=data)
+					await msg.edit(content=f'Last Updated : {last_sent} hrs ago', embed=data)
 					self.db.update_static_ranklist_last_sent(str(pid))
 				else:
 					print("Skipping")
