@@ -51,7 +51,7 @@ async def on_member_remove(member):
 
 
 #Add Your Bot Token
-token = "YourBotToken"
+token = os.getenv("BOT_TOKEN","TOKEN_")
 
 
 client.run(token)
