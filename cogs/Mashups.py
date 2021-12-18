@@ -240,7 +240,7 @@ class Mashups(commands.Cog):
 					static_ranklist_channel = self.client.get_channel(channelid)
 					msg = await static_ranklist_channel.fetch_message(msgid)					
 					import datetime
-					data.set_footer(text=f'Last Updated : {datetime.datetime.now().strftime("%d/%m/%y %I:%M %p")} hrs ago')
+					data.set_footer(text=f'Last Updated : {datetime.datetime.now().strftime("%d/%m/%y %I:%M %p")}')
 					await msg.edit(embed=data)
 					self.db.update_static_ranklist_last_sent(pid)
 				else:
