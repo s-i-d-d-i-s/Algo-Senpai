@@ -242,8 +242,9 @@ class Mashups(commands.Cog):
 					last_seen = int(time.time())-last_sent
 					last_seen/=60
 					last_seen/=60
-					await msg.edit(content=f'Last Updated : {last_sent} hrs ago', embed=data)
-					self.db.update_static_ranklist_last_sent(str(pid))
+					embed.set_footer(text=f'Last Updated : {last_sent} hrs ago')
+					await msg.edit(embed=data)
+					self.db.update_static_ranklist_last_sent(pid)
 				else:
 					print("Skipping")
 		except Exception as e:

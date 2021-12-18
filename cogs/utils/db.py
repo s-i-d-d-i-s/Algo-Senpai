@@ -97,6 +97,7 @@ class DB:
 					return data[d]
 			return None
 		obj = fetch_ranklist_with_id(self.baseUrl,id)
+		print("In update_static_ranklist_last_sent",obj)
 		obj['last_sent'] = int(time.time())
 		data = json.loads(requests.patch(self.baseUrl + 'static_ranklist/'+obj['id']+'.json',json.dumps(obj)).content)
 
