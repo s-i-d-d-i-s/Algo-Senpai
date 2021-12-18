@@ -239,7 +239,10 @@ class Mashups(commands.Cog):
 				if time.time()>int(last_sent)+RANKLIST_TIMELIMIT:
 					static_ranklist_channel = self.client.get_channel(channelid)
 					msg = await static_ranklist_channel.fetch_message(msgid)					
-					msg.edit(embed=data)
+					last_seen = int(time.time())-last_sent
+					last_seen/=60
+					last_seen/=60
+					msg.edit(content=f'Last Updated : {last_sent} hrs ago', embed=data)
 					self.db.update_static_ranklist_last_sent(str(pid))
 				else:
 					print("Skipping")
