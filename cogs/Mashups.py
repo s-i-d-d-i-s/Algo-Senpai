@@ -233,7 +233,7 @@ class Mashups(commands.Cog):
 				pid = x['id']
 				guildid = int(x['guildid'])
 				channelid = int(x['channelid'])
-				msgid = int(x['msgid'])
+				msgid = int(x['msg'])
 				last_sent = int(x['last_sent'])
 				data = self.getRanklistEmbed(guildid)
 				if time.time()>int(last_sent)+RANKLIST_TIMELIMIT:
