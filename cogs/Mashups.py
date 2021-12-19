@@ -179,6 +179,7 @@ class Mashups(commands.Cog):
 			data = self.db.fetch_all_mashup()			
 			if len(data)==0:
 				print("No Mashups")
+			print("Doing Mashups")
 			tz = pytz.timezone('Asia/Kolkata')
 			time_day = datetime.now(tz).day
 			time_month = datetime.now(tz).month
@@ -190,16 +191,18 @@ class Mashups(commands.Cog):
 				lower_rating = int(x['lower_rating'])
 				last_sent  = int(x['last_sent'])
 				upper_rating = int(x['upper_rating'])
-				problem_count= int(x['problem_count'])
-				print(guildid,channelid,timelimit,lower_rating,last_sent,upper_rating,problem_count)
+				problem_count= int(x['problem_count'])				
 				if int(time.time())<last_sent+timelimit:
-					print("skipping")
+					print("Skipping Mashup")
 					continue
-				self.db.update_mashup(x['id'])
+				
 				channel = self.client.get_channel(channelid)
+				if channel == None:
+					continue
 				mashupData = cfmaster.getPset(lower_rating,upper_rating,problem_count)
 				embed = discord.Embed(description=mashupData, color=self.getRandomColour())
 				current_pset = await channel.send(f"```{x['mashuptype']} Day Problemset : {time_day}/{time_month}/{time_year} || TL - {x['mashuptype']} Days```\n\n",embed=embed)
+				self.db.update_mashup(x['id'])
 				self.db.add_mashup_data(guildid,channelid,current_pset.id)
 				pset_emojis = "🇦🇧🇨🇩🇪"
 				for i in range(problem_count):
@@ -212,6 +215,7 @@ class Mashups(commands.Cog):
 			data = self.db.fetch_all_ranklist()
 			if len(data)==0:
 				print("No Ranklist")
+			print("Doing Ranklist")
 			for x in data:
 				pid = x['id']
 				guildid = int(x['guildid'])
@@ -221,7 +225,8 @@ class Mashups(commands.Cog):
 					await self.send_ranklist(str(guildid),str(channelid))
 					self.db.update_ranklist_last_sent(str(pid))
 				else:
-					print("Skipping")
+					print("Skipping Ranklist")
+			print("Finished Sending Ranklists ")
 		except Exception as e:
 			print(str(e))
 
@@ -229,6 +234,7 @@ class Mashups(commands.Cog):
 			data = self.db.fetch_all_static_ranklist()
 			if len(data)==0:
 				print("No Static Ranklist")
+			print("Doing Static Ranklist")
 			for x in data:
 				pid = x['id']
 				guildid = int(x['guildid'])
@@ -238,12 +244,14 @@ class Mashups(commands.Cog):
 				data = await self.getRanklistEmbed(guildid)
 				if time.time()>int(last_sent)+RANKLIST_TIMELIMIT:
 					static_ranklist_channel = self.client.get_channel(channelid)
-					msg = await static_ranklist_channel.fetch_message(msgid)							
+					msg = await static_ranklist_channel.fetch_message(msgid)
+					print(data)
 					data.set_footer(text=f'Last Updated : {datetime.now().strftime("%d/%m/%y %I:%M %p")}')
 					await msg.edit(embed=data)
 					self.db.update_static_ranklist_last_sent(pid)
 				else:
-					print("Skipping")
+					print("Skipping Static Ranklist")
+			print("Finished Updating Static Ranklist ")
 		except Exception as e:
 			print(str(e))
 

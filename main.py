@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import asyncio
 from discord.utils import find
-import os
+import os,json
 
 intents = discord.Intents(messages = True, guilds = True, reactions = True, members = True, presences = True)
 client = commands.Bot(command_prefix= 'e;', intents = intents)
@@ -52,6 +52,8 @@ async def on_member_remove(member):
 
 #Add Your Bot Token
 token = os.getenv("BOT_TOKEN","TOKEN_")
+if token == "TOKEN_":
+	token = json.loads(open('DebugFiles/keys.json').read())[0]
 
-
+print("USING TOKEN: ", token)
 client.run(token)

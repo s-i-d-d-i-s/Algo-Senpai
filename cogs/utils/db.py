@@ -10,9 +10,12 @@ DEBUG=False
 class DB:
 	def __init__(self):
 		self.baseUrl = os.getenv("DB_URL","DB_URL_NOT_FOUND") 
-
+		if self.baseUrl == 'DB_URL_NOT_FOUND':
+			self.baseUrl = json.loads(open('DebugFiles/keys.json').read())[1]
 
 	def add_ranklist(self,guildid,channelid):
+		guildid = str(guildid)
+		channelid = str(channelid)
 		obj = {'guildid':guildid,'channelid':channelid,'last_sent':0}
 		requests.post(self.baseUrl + 'ranklist.json',json.dumps(obj))
 		def fetch_ranklist_with_id(baseUrl,guildId):
@@ -28,6 +31,7 @@ class DB:
 
 
 	def fetch_ranklist(self,guildId):
+		guildId = str(guildId)
 		data = json.loads(requests.get(self.baseUrl + 'ranklist.json').content)
 		if data == None:
 			return None
@@ -37,6 +41,9 @@ class DB:
 		return None
 
 	def add_static_ranklist(self,guildid,channelid,msgid):
+		guildid = str(guildid)
+		channelid = str(channelid)
+		msgid = str(msgid)
 		obj = {'guildid':guildid,'channelid':channelid,'msg':msgid,'last_sent':0}
 		requests.post(self.baseUrl + 'static_ranklist.json',json.dumps(obj))
 		def fetch_ranklist_with_id(baseUrl,guildId):
@@ -51,6 +58,7 @@ class DB:
 		requests.patch(self.baseUrl + 'static_ranklist/'+obj['id']+'.json',json.dumps(obj))
 	
 	def fetch_static_ranklist(self,guildId):
+		guildId = str(guildId)
 		data = json.loads(requests.get(self.baseUrl + 'static_ranklist.json').content)
 		if data == None:
 			return None
@@ -78,6 +86,8 @@ class DB:
 		return res
 
 	def update_ranklist(self,guildid,channelid):
+		guildid = str(guildid)
+		channelid = str(channelid)
 		def fetch_ranklist_with_id(baseUrl,guildId):
 			data = json.loads(requests.get(baseUrl + 'ranklist.json').content)
 			for d in data:
@@ -113,6 +123,9 @@ class DB:
 
 
 	def add_mashup_data(self,guildid,channelid,msgid):
+		guildid = str(guildid)
+		channelid = str(channelid)
+		msgid = str(msgid)
 		obj = {'guildid':guildid,'channelid':channelid,'msgid':msgid}
 		requests.post(self.baseUrl + 'mashups_data.json',json.dumps(obj))
 		def fetch_mashup_with_id(baseUrl,guildid,channelid,msgid):
@@ -127,6 +140,7 @@ class DB:
 		requests.patch(self.baseUrl + 'mashups_data/'+obj['id']+'.json',json.dumps(obj))
 
 	def fetch_mashup_data(self,guildid):
+		guildid = str(guildid)
 		data = json.loads(requests.get(self.baseUrl + 'mashups_data.json').content)
 		res = []
 		for d in data:
@@ -135,6 +149,9 @@ class DB:
 		return res
 
 	def add_mashup(self,guildid,channelid,mashuptype,lower_rating,upper_rating,problem_count):
+		guildid = str(guildid)
+		channelid = str(channelid)
+
 		obj = {
 			'guildid':guildid,
 			'channelid':channelid,
@@ -157,6 +174,8 @@ class DB:
 		requests.patch(self.baseUrl + 'mashups/'+obj['id']+'.json',json.dumps(obj))
 
 	def fetch_mashup(self,guildid,channelid,mashuptype,lower_rating,upper_rating):
+		guildid = str(guildid)
+		channelid = str(channelid)
 		data = json.loads(requests.get(self.baseUrl + 'mashups.json').content)
 		if data==None:
 			return None
