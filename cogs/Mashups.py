@@ -191,7 +191,8 @@ class Mashups(commands.Cog):
 				lower_rating = int(x['lower_rating'])
 				last_sent  = int(x['last_sent'])
 				upper_rating = int(x['upper_rating'])
-				problem_count= int(x['problem_count'])				
+				problem_count= int(x['problem_count'])	
+				print("Current Time: ",int(time.time()),"Deadline: ",last_sent+timelimit)
 				if int(time.time())<last_sent+timelimit:
 					print("Skipping Mashup")
 					continue
