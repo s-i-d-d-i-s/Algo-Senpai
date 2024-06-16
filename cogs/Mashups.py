@@ -246,7 +246,6 @@ class Mashups(commands.Cog):
 				if time.time()>int(last_sent)+RANKLIST_TIMELIMIT:
 					static_ranklist_channel = self.client.get_channel(channelid)
 					msg = await static_ranklist_channel.fetch_message(msgid)
-					print(data)
 					data.set_footer(text=f'Last Updated : {datetime.now().strftime("%d/%m/%y %I:%M %p")}')
 					await msg.edit(embed=data)
 					self.db.update_static_ranklist_last_sent(pid)
@@ -271,7 +270,8 @@ class Mashups(commands.Cog):
 				channel = find(lambda x: x.id == int(y[2]),  ctx.message.guild.text_channels)
 				message = await channel.fetch_message(int(y[3]))
 				for x in message.reactions:
-					users = await x.users().flatten()
+					users = [user async for user in x.users()]
+					
 					for z in users:
 						if z.bot==False:
 							username = z.name+"#"+z.discriminator
@@ -302,7 +302,7 @@ class Mashups(commands.Cog):
 			channel = self.client.get_channel(int(y['channelid']))
 			message = await channel.fetch_message(int(y['msgid']))
 			for x in message.reactions:
-				users = await x.users().flatten()
+				users = [user async for user in x.users()]
 				for z in users:
 					if z.bot==False:
 						username = z.name+"#"+z.discriminator
@@ -310,6 +310,7 @@ class Mashups(commands.Cog):
 							ranklist[username]+=1
 						else:
 							ranklist[username]=1
+
 		ranklist =dict(sorted(ranklist.items(), key=lambda item: item[1],reverse=True))
 		style = table.Style('{:>} {:<} {:<}')
 		t = table.Table(style)
@@ -330,10 +331,11 @@ class Mashups(commands.Cog):
 		
 
 
-	@commands.command(brief='Get bot version')
-	async def version(self,ctx):
-		await ctx.send("```Version 2.0```")
+	@discord.app_commands.command(name="version", description="Get bot version")
+	async def version(self,interaction):
+		await interaction.response.send_message("```1.0.0```")
+
 	
 
-def setup(client):
-	client.add_cog(Mashups(client))
+async def setup(client):
+	await client.add_cog(Mashups(client))
